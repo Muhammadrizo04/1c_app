@@ -1,22 +1,15 @@
-onec/tests/namunalar/*.raw.json
+# Bog'liqliklar va yig'ilgan fayllar (git'da saqlanmaydi)
+node_modules/
+web/dist/
+web/dist-test/
+*.apk
+*.aab
+
+# IDE
+.idea/
+android/.idea/
+
+# Maxfiy
 .env
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-media/
-staticfiles/
-.pytest_cache/
-*.sqlite3
-*.log
-
-# Impeccable ish fayllari (qaror sahifasi, eskizlar, suratlar)
-.impeccable/questions/
-.impeccable/review/
-.impeccable/live/
-.impeccable/mocks/
-.impeccable/edge-profil/
-.superpowers/
-
-# Rollarni sinash foydalanuvchilari (parol bilan)
-sinov_foydalanuvchilar.txt
+*.keystore
+*.jks

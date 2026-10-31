@@ -1,0 +1,8 @@
+{
+  "appId": "uz.ostatka.app",
+  "appName": "Dom Stroy",
+  "webDir": "www",
+  "server": { "cleartext": true },
+  "android": { "allowMixedContent": true },
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}

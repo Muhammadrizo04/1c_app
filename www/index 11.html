@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dom Stroy</title>
+<style>
+:root{--bg:#f3f5f2;--card:#fff;--ink:#17231c;--mute:#66736b;--line:#dde3de;--acc:#1f6b45;--ai:#fff;--warn:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#121714;--card:#1b231e;--ink:#e8efe9;--mute:#93a198;--line:#2c372f;--acc:#5bc08a;--ai:#08140d;--warn:#ff8a80}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,sans-serif}
+body{padding:env(safe-area-inset-top) 0 calc(84px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;background:var(--bg);padding:10px 14px;border-bottom:1px solid var(--line);z-index:2;display:grid;gap:8px}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+input,select{width:100%;padding:11px 12px;font-size:16px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+button{border:0;border-radius:10px;padding:0 14px;font-size:15px;font-weight:600;background:var(--acc);color:var(--ai);min-height:42px}
+button.g{background:transparent;color:var(--mute);font-weight:500}
+:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+[hidden]{display:none!important}
+#st{padding:8px 14px;font-size:14px;color:var(--mute)}#st.e{color:var(--warn)}
+main{padding:0 14px}#home{padding-top:14px}
+.big{display:block;width:100%;margin:0 0 12px;padding:22px 16px;font-size:21px;text-align:left;min-height:92px}
+.big small{display:block;font-weight:400;font-size:14px;opacity:.85;margin-top:4px}
+#allbtn{border:1.5px solid var(--line);color:var(--acc);background:transparent;min-height:40px}
+h2{margin:14px 14px 6px;font-size:15px;color:var(--mute);font-weight:600}
+.it{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;padding:10px 12px}
+.it.d{border-left:4px solid var(--acc)}
+.nm{font-weight:700}.sub{color:var(--mute);font-size:13px}
+.bar{height:5px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc)}
+.ac{margin-top:8px}
+.tabs{display:flex;gap:6px;overflow-x:auto}
+.tabs button{background:var(--card);color:var(--ink);border:1.5px solid var(--line);white-space:nowrap;min-height:38px;font-size:14px}
+.tabs button.on{background:var(--acc);color:var(--ai);border-color:var(--acc)}
+.cells{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:8px;margin-top:8px}
+.cell{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cell small{color:var(--mute);font-size:12px}
+.cell .v{display:flex;align-items:center;justify-content:center;min-height:48px;font-size:17px;font-weight:700;border:1.5px solid var(--line);border-radius:10px;background:var(--bg)}
+.cell input{text-align:center;font-weight:700;font-size:17px;padding:11px 4px;min-height:48px}
+.df.neg{color:var(--warn)}.df.pos{color:var(--acc)}
+#bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:2px;padding-bottom:env(safe-area-inset-bottom);background:var(--bg)}
+#bar button{flex:1;border-radius:0;min-height:56px;font-size:17px}
+#fin{background:var(--ink);color:var(--bg)}
+#rf{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;padding:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:3}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:20px;font-size:14px;z-index:5}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);width:min(92vw,420px)}
+dialog label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.act{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+</style></head><body>
+<header>
+ <div class="row"><button class="g" id="back" hidden>Orqaga</button><b id="ttl">Dom Stroy</b><span class="sp"></span><button class="g" id="cfg">Sozlama</button></div>
+ <select id="sk" aria-label="Ombor" hidden></select>
+ <input id="q" type="search" placeholder="Tovar nomi" enterkeyhint="search" hidden>
+ <button id="allbtn" hidden>Ro'yxatda yo'q tovar qo'shish</button>
+ <div class="tabs" id="tabs" hidden><button data-m="all" class="on">Jami</button><button data-m="new">Sanalmaganlar</button><button data-m="diff">Farqlilar</button></div>
+</header>
+<div id="st"></div>
+<main id="home"><button class="big" id="bi">Kunlik sanoq<small>Ombor va tovarni o'zingiz tanlab sanaysiz</small></button><button class="big" id="bk">Ichki sanoq<small>1C'da tayyorlangan qoralama hujjat bo'yicha</small></button></main>
+<main id="list" hidden></main>
+<main id="rows" hidden></main>
+<main id="res" hidden></main>
+<h2 id="ch" hidden>Sanalganlar (0)</h2>
+<main id="cl" hidden></main>
+<button id="rf" aria-label="Yangilash" hidden><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button>
+<div id="bar" hidden><button id="save">Saqlash</button><button id="fin" hidden>Yakunlash</button></div>
+<div id="toast" hidden></div>
+<dialog id="lk">
+ <b>Sozlamalar himoyalangan</b>
+ <label for="lp">Parol</label><input id="lp" type="password" inputmode="numeric" autocomplete="off">
+ <div class="act"><button class="g" id="lno">Bekor qilish</button><button id="lok">Kirish</button></div>
+</dialog>
+<dialog id="dlg">
+ <b>Server sozlamalari</b>
+ <label for="root">Server manzili</label><input id="root" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false">
+ <label for="usr">Login</label><input id="usr" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+ <label for="pwd">Parol</label><input id="pwd" type="password" autocomplete="off">
+ <div class="act"><button class="g" id="no">Bekor qilish</button><button id="ok">Saqlash</button></div>
+</dialog>
+<script>
+const $=i=>document.getElementById(i),ROOT="https://untrying-suberic-grayson.ngrok-free.dev/mobil/hs/ostatka/",PIN="5677487";
+const LS={g:(k,d)=>{try{return localStorage.getItem(k)||d}catch(e){return d}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const nf=new Intl.NumberFormat("ru-RU",{maximumFractionDigits:3});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let scr="home",cur=null,rows=[],last=[],seq=0,tm,mode="all",allMode=false,addMode=false,lastBack=0,flash="",cnts=null,
+ dirty=JSON.parse(LS.g("dirty","{}")),adds=JSON.parse(LS.g("adds","{}")),cnt=JSON.parse(LS.g("cnt","{}"));
+const A=()=>(adds[cur.id]=adds[cur.id]||{}),sa=()=>LS.s("adds",JSON.stringify(adds));
+const K=r=>r.id+"|"+r.seria,D=()=>(dirty[cur.id]=dirty[cur.id]||{}),sv=()=>LS.s("dirty",JSON.stringify(dirty)),
+ C=()=>(cnt[$("sk").value]=cnt[$("sk").value]||{}),sc=()=>LS.s("cnt",JSON.stringify(cnt));
+const st=(t,e)=>{$("st").textContent=t;$("st").className=e?"e":""};
+const dt=(u,f,on)=>on?(f-u>0?"+":"")+nf.format(Math.round((f-u)*1000)/1000):"—";
+const dc=(u,f,on)=>{if(!on)return"";const d=Math.round((f-u)*1000);return d<0?"neg":d>0?"pos":""};
+
+async function api(p,o={}){
+ const h={"ngrok-skip-browser-warning":"1",...(o.headers||{})},u=LS.g("usr","");
+ if(u)h.Authorization="Basic "+btoa(unescape(encodeURIComponent(u+":"+LS.g("pwd",""))));
+ const U=LS.g("root",ROOT)+p;let r;try{r=await fetch(U,{...o,headers:h})}catch(e){throw new Error("Serverga ulanib bo'lmadi. Internet va manzilni tekshiring.")}
+ if(r.status===401)throw new Error("Login yoki parol noto'g'ri.");
+ const j=await r.json().catch(()=>null);
+ if(!r.ok)throw new Error((j&&j.error?j.error:"Server xatosi "+r.status+" — "+U).slice(0,300));
+ if(j===null)throw new Error("Server JSON o'rniga boshqa javob qaytardi. Manzilni tekshiring.");
+ return j;
+}
+function btn(){let n=0,t="";
+ if(scr==="kd"){n=Object.keys(D()).length;t="Saqlash"}else if(scr==="ik"){n=Object.keys(C()).length;t="Hujjatga yuborish"}
+ $("save").hidden=!n;$("save").textContent=t+" ("+n+")";$("fin").hidden=scr!=="kd";
+ $("bar").hidden=$("save").hidden&&$("fin").hidden}
+function show(s){const prev=scr;scr=s;const H=(i,h)=>$(i).hidden=h;
+ H("home",s!=="home");H("list",s!=="kl");H("rows",s!=="kd");H("res",s!=="ik");H("ch",s!=="ik");H("cl",s!=="ik");
+ H("tabs",s!=="kd"||addMode);H("sk",s!=="ik");H("allbtn",s!=="ik"&&s!=="kd");lab();H("q",s==="home"||s==="kl");H("back",s==="home");H("rf",s==="home");
+ $("ttl").textContent={home:"Dom Stroy",ik:"Kunlik sanoq",kl:"Ichki sanoq",kd:cur?"№ "+cur.nomer:""}[s];btn();
+}
+const card=(x,v,fk)=>{const on=v!==undefined,sg=fk!==undefined&&(x.sanalgan!==undefined?!!x.sanalgan:!!fk),f=on?v:fk,sh=on||sg;
+ return `<div class="it${sh?" d":""}"><div class="nm">${esc(x.name)}</div>${x.seria_name?`<div class="sub">${esc(x.seria_name)}</div>`:""}
+ <div class="cells"><div class="cell"><small>Baza</small><div class="v">${nf.format(x.uchet)}</div></div>
+ <div class="cell"><small>Fakt</small><input data-k="${K(x)}" type="number" inputmode="decimal" min="0" placeholder="" value="${on?v:(sg?fk:"")}"></div>
+ <div class="cell"><small>Farq</small><div class="v df ${dc(x.uchet,f,sh)}">${dt(x.uchet,f,sh)}</div></div></div></div>`};
+
+/* ---------- Kunlik sanoq (ombor va tovarni o'zi tanlaydi) ---------- */
+async function loadSk(){
+ try{const l=await api("skladlar");
+  $("sk").innerHTML=l.map(x=>`<option value="${x.id}">${esc(x.name)}</option>`).join("");
+  const p=LS.g("sk","");if(p)$("sk").value=p;
+  if(!$("sk").value&&l.length)$("sk").value=l[0].id;
+  st(l.length?"Tovar nomini yozing.":"Ombor topilmadi.",!l.length);drawC()}
+ catch(e){st(e.message,1)}
+}
+async function find(){
+ const q=$("q").value.trim(),my=++seq;
+ if(q.length<2){$("res").innerHTML="";return st("Kamida 2 ta harf kiriting.")}
+ if(!$("sk").value)return st("Avval ombor tanlang.",1);
+ st("Qidirilmoqda...");
+ try{const r=await api("tovar/"+encodeURIComponent(q)+"?sklad="+$("sk").value+(allMode?"&all=1":""));if(my!==seq)return;
+  last=r;st(r.length?r.length+" ta natija":(allMode?"Topilmadi.":"Omborda topilmadi. «Ro'yxatda yo'q tovar qo'shish» ni bosing."));
+  $("res").innerHTML=r.map(x=>{const v=C()[K(x)];return card(x,v?v.fakt:undefined)}).join("");
+ }catch(e){if(my===seq)st(e.message,1)}
+}
+function drawC(){const m=C(),k=Object.keys(m);$("ch").textContent="Sanalganlar ("+k.length+")";
+ $("cl").innerHTML=k.map(i=>{const x=m[i];
+  return `<div class="it"><div class="nm">${esc(x.name)}</div><div class="sub">Baza ${nf.format(x.uchet)} · Fakt ${nf.format(x.fakt)} · Farq <b class="df ${dc(x.uchet,x.fakt,1)}">${dt(x.uchet,x.fakt,1)}</b></div>
+  <div class="ac"><button class="g" data-d="${esc(i)}">O'chirish</button></div></div>`}).join("");btn()}
+$("cl").onclick=e=>{const b=e.target.closest("button[data-d]");if(!b)return;delete C()[b.dataset.d];sc();drawC();if($("q").value.trim().length>1)find()};
+async function sendI(){const m=C(),k=Object.keys(m);
+ if(!confirm(k.length+" ta tovar yuboriladi. Davom etasizmi?"))return;
+ st("Yuborilmoqda...");
+ try{const r=await api("inv",{method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({uid:Date.now()+"",sklad:$("sk").value,items:k.map(i=>({id:m[i].id,seria:m[i].seria,fakt:m[i].fakt}))})});
+  cnt[$("sk").value]={};sc();drawC();$("res").innerHTML="";st("Yuborildi. 1C'da hujjat № "+r.nomer+" (o'tkazilmagan).")}
+ catch(e){st(e.message+" Sanoq telefonda saqlangan.",1)}
+}
+$("sk").onchange=()=>{LS.s("sk",$("sk").value);$("res").innerHTML="";drawC();if($("q").value.trim().length>1)find()};
+function lab(){const on=scr==="kd"?addMode:allMode;$("allbtn").textContent=on?(scr==="kd"?"Hujjat tovarlariga qaytish":"Faqat ombordagi tovarlarni ko'rsatish"):"Ro'yxatda yo'q tovar qo'shish"}
+$("allbtn").onclick=()=>{if(scr==="kd"){addMode=!addMode;$("tabs").hidden=addMode;lab();loadRows()}else{allMode=!allMode;lab();find()}};
+
+/* ---------- Ichki sanoq (1C qoralama hujjati) ---------- */
+async function loadDocs(){
+ cur=null;$("q").value="";show("kl");st("Yuklanmoqda...");
+ try{const l=await api("hujjatlar");
+  st((flash?flash+" · ":"")+(l.length?l.length+" ta qoralama hujjat":"Qoralama hujjat yo'q."));flash="";
+  $("list").innerHTML=l.map(d=>{const p=d.jami?Math.round(d.tayyor*100/d.jami):0,n=Object.keys(dirty[d.id]||{}).length;
+   return `<div class="it" data-id="${d.id}" data-n="${esc(d.nomer)}"><div class="nm">№ ${esc(d.nomer)} · ${esc(d.sklad)}</div>
+   <div class="sub">${esc(d.sana)} · Sanalgan ${d.tayyor}/${d.jami}${n?" · saqlanmagan: "+n:""}</div><div class="bar"><i style="width:${p}%"></i></div></div>`}).join("");
+ }catch(e){st(e.message,1)}
+}
+$("list").onclick=e=>{const c=e.target.closest("[data-id]");if(!c)return;
+ cur={id:c.dataset.id,nomer:c.dataset.n};mode="all";addMode=false;$("q").value="";show("kd");loadRows()};
+function tabs(c){if(!c)return;
+ const t={all:"Jami ("+c.jami+")",new:"Sanalmaganlar ("+c.sanalmagan+")",diff:"Farqlilar ("+c.farqli+")"};
+ document.querySelectorAll("#tabs button").forEach(b=>{b.textContent=t[b.dataset.m];b.classList.toggle("on",b.dataset.m===mode)})}
+$("tabs").onclick=e=>{const b=e.target.closest("button[data-m]");if(!b)return;mode=b.dataset.m;loadRows()};
+async function loadRows(){
+ const q=$("q").value.trim(),my=++seq;
+ if(addMode){
+  if(q.length<2){rows=[];$("rows").innerHTML="";return st("Qo'shiladigan tovar nomini yozing (kamida 2 ta harf).")}
+  if(!cur.sklad)return st("Hujjat ombori topilmadi. 1C modulini yangilang.",1);
+  st("Qidirilmoqda...");
+  try{const r=await api("tovar/"+encodeURIComponent(q)+"?sklad="+cur.sklad+"&all=1");if(my!==seq)return;
+   rows=r;st(r.length?r.length+" ta natija":"Topilmadi.");$("rows").innerHTML=r.map(x=>card(x,D()[K(x)])).join("")}
+  catch(e){if(my===seq)st(e.message,1)}
+  return}
+ st("Yuklanmoqda...");
+ try{const r=await api("hujjat/"+cur.id+"?q="+encodeURIComponent(q)+"&f="+mode);if(my!==seq)return;
+  if(r.proveden)return st("Bu hujjat 1C'da o'tkazilgan. O'zgartirib bo'lmaydi.",1);
+  rows=r.rows;cur.sklad=r.sklad;cnts=r.counts;tabs(r.counts);
+  st(rows.length?rows.length+" ta tovar"+(rows.length>=50?" (birinchi 50 ta, qidiruv bilan toraytiring)":""):"Topilmadi.");
+  $("rows").innerHTML=rows.map(x=>card(x,D()[K(x)],x.fakt)).join("");
+ }catch(e){if(my===seq)st(e.message,1)}
+}
+async function saveK(){const d=D(),ks=Object.keys(d);
+ const items=ks.map(k=>{const [id,seria]=k.split("|");return{id,seria,fakt:d[k],add:A()[k]?1:0}});
+ st("Saqlanmoqda...");
+ try{const r=await api("hujjat/"+cur.id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items})});
+  const had=Object.keys(A()).length;delete dirty[cur.id];delete adds[cur.id];sv();sa();if(had){addMode=false;lab();$("tabs").hidden=false}btn();await loadRows();
+  st("Saqlandi: "+r.updated+" ta"+(r.missing?", hujjatda topilmadi: "+r.missing:"")+".");return true}
+ catch(e){st(e.message+" O'zgarishlar telefonda saqlangan.",1);return false}
+}
+async function yakun(){
+ try{
+  if(Object.keys(D()).length){if(!(await saveK()))return}else await loadRows();
+  const nn=cnts?cnts.sanalmagan:0;
+  if(!confirm("Hujjat 1C'da O'TKAZILADI.\n"+(nn?"Sanalmagan "+nn+" ta tovar fakti 0 deb hisoblanib, ombordan chiqib ketadi.\n":"")+"Davom etasizmi?"))return;
+  st("O'tkazilmoqda...");
+  await api("hujjat/"+cur.id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:[],post:true})});
+  delete dirty[cur.id];delete adds[cur.id];sv();sa();flash="Hujjat 1C'da o'tkazildi.";loadDocs();
+ }catch(e){st(e.message,1)}
+}
+
+/* ---------- Umumiy ---------- */
+function inp(e,arr){const k=e.target.dataset.k;if(!k)return;
+ const v=parseFloat(e.target.value),on=!(isNaN(v)||v<0),x=arr.find(r=>K(r)===k);
+ if(scr==="kd"){if(on){D()[k]=v;if(addMode)A()[k]=1}else{delete D()[k];delete A()[k]}sv();sa()}
+ else{if(on)C()[k]={id:x.id,seria:x.seria,name:x.name,uchet:x.uchet,fakt:v};else delete C()[k];sc();drawC()}
+ const it=e.target.closest(".it"),fe=it.querySelector(".df");
+ it.classList.toggle("d",on);fe.textContent=dt(x.uchet,v,on);fe.className="v df "+dc(x.uchet,v,on);btn()}
+$("rows").oninput=e=>inp(e,rows);$("res").oninput=e=>inp(e,last);
+const go=()=>scr==="ik"?find():loadRows();
+$("q").oninput=()=>{clearTimeout(tm);tm=setTimeout(go,400)};
+$("q").onkeydown=e=>{if(e.key==="Enter"){clearTimeout(tm);go()}};
+$("save").onclick=()=>scr==="ik"?sendI():saveK();
+$("fin").onclick=yakun;
+$("bi").onclick=()=>{$("q").value="";$("res").innerHTML="";show("ik");st("Tovar nomini yozing.");if(!$("sk").options.length)loadSk();else drawC()};
+$("bk").onclick=loadDocs;
+function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2000)}
+function onBack(){
+ const op=document.querySelector("dialog[open]");if(op){op.close();return}
+ if(scr==="kd")loadDocs();
+ else if(scr!=="home"){st("");show("home")}
+ else if(Date.now()-lastBack<2000){const P=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;if(P&&P.exitApp)P.exitApp()}
+ else{lastBack=Date.now();toast("Chiqish uchun yana bir marta bosing")}}
+const CAP=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.App;
+if(CAP&&CAP.addListener)CAP.addListener("backButton",onBack);
+$("back").onclick=onBack;
+$("rf").onclick=()=>scr==="kl"?loadDocs():go();
+
+/* ---------- Sozlamalar (parol bilan) ---------- */
+$("cfg").onclick=()=>{$("lp").value="";$("lp").placeholder="";$("lk").showModal()};
+$("lno").onclick=()=>$("lk").close();
+const lok=()=>{if($("lp").value===PIN){$("lk").close();
+  $("root").value=LS.g("root",ROOT);$("usr").value=LS.g("usr","");$("pwd").value=LS.g("pwd","");$("dlg").showModal()}
+ else{$("lp").value="";$("lp").placeholder="Parol noto'g'ri"}};
+$("lok").onclick=lok;$("lp").onkeydown=e=>{if(e.key==="Enter")lok()};
+$("no").onclick=()=>$("dlg").close();
+$("ok").onclick=()=>{LS.s("root",$("root").value.trim().toLowerCase().replace(/\/*$/,"/"));LS.s("usr",$("usr").value);LS.s("pwd",$("pwd").value);$("dlg").close();$("sk").innerHTML="";st("");show("home")};
+show("home");
+</script></body></html>

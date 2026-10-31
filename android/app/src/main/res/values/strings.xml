@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Dom Stroy</string>
+    <string name="title_activity_main">Dom Stroy</string>
+    <string name="package_name">uz.ostatka.app</string>
+    <string name="custom_url_scheme">uz.ostatka.app</string>
+</resources>

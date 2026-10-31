@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="uz"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Inventarizatsiya</title>
+<style>
+:root{--bg:#f3f5f2;--card:#fff;--ink:#17231c;--mute:#66736b;--line:#dde3de;--acc:#1f6b45;--ai:#fff;--warn:#b3261e}
+@media (prefers-color-scheme:dark){:root{--bg:#121714;--card:#1b231e;--ink:#e8efe9;--mute:#93a198;--line:#2c372f;--acc:#5bc08a;--ai:#08140d;--warn:#ff8a80}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,sans-serif}
+body{padding:env(safe-area-inset-top) 0 calc(76px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;background:var(--bg);padding:10px 14px;border-bottom:1px solid var(--line);z-index:2;display:grid;gap:8px}
+.row{display:flex;gap:8px;align-items:center}.sp{flex:1}
+input{width:100%;padding:11px 12px;font-size:16px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+button{border:0;border-radius:10px;padding:0 14px;font-size:15px;font-weight:600;background:var(--acc);color:var(--ai);min-height:42px}
+button.g{background:transparent;color:var(--mute);font-weight:500}
+:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+[hidden]{display:none!important}
+#st{padding:8px 14px;font-size:14px;color:var(--mute)}#st.e{color:var(--warn)}
+main{padding:0 14px}
+.it{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;padding:10px 12px}
+.it.d{border-left:4px solid var(--acc)}
+.nm{font-weight:700}.sub{color:var(--mute);font-size:13px}
+.bar{height:5px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--acc)}
+.ac{margin-top:8px}.ac input{max-width:160px}
+.tabs{display:flex;gap:6px;overflow-x:auto}
+.tabs button{background:var(--card);color:var(--ink);border:1.5px solid var(--line);white-space:nowrap;min-height:38px;font-size:14px}
+.tabs button.on{background:var(--acc);color:var(--ai);border-color:var(--acc)}
+.cells{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:8px;margin-top:8px}
+.cell{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cell small{color:var(--mute);font-size:12px}
+.cell .v{display:flex;align-items:center;justify-content:center;min-height:48px;font-size:17px;font-weight:700;border:1.5px solid var(--line);border-radius:10px;background:var(--bg)}
+.cell input{max-width:none;text-align:center;font-weight:700;font-size:17px;padding:11px 4px;min-height:48px}
+.df.neg{color:var(--warn)}.df.pos{color:var(--acc)}
+#save{position:fixed;left:0;right:0;bottom:0;border-radius:0;min-height:56px;padding-bottom:env(safe-area-inset-bottom);font-size:17px}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);width:min(92vw,420px)}
+dialog label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.act{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+</style></head><body>
+<header>
+ <div class="row"><button class="g" id="back" hidden>Orqaga</button><b id="ttl">Qoralama hujjatlar</b><span class="sp"></span><button class="g" id="rf">Yangilash</button><button class="g" id="cfg">Sozlama</button></div>
+ <input id="q" type="search" placeholder="Hujjat ichidan tovar qidirish" enterkeyhint="search" hidden>
+ <div class="tabs" id="tabs" hidden><button data-m="all" class="on">Jami</button><button data-m="new">Sanalmaganlar</button><button data-m="diff">Farqlilar</button></div>
+</header>
+<div id="st"></div>
+<main id="list"></main>
+<main id="rows" hidden></main>
+<button id="save" hidden>Saqlash</button>
+<dialog id="dlg">
+ <b>Server sozlamalari</b>
+ <label for="root">Server manzili</label><input id="root">
+ <label for="usr">Login</label><input id="usr" autocomplete="off">
+ <label for="pwd">Parol</label><input id="pwd" type="password" autocomplete="off">
+ <div class="act"><button class="g" id="no">Bekor qilish</button><button id="ok">Saqlash</button></div>
+</dialog>
+<script>
+const $=i=>document.getElementById(i),ROOT="http://192.168.100.30/test_03082026/hs/ostatka/";
+const LS={g:(k,d)=>{try{return localStorage.getItem(k)||d}catch(e){return d}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}};
+const nf=new Intl.NumberFormat("ru-RU",{maximumFractionDigits:3});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let cur=null,rows=[],seq=0,tm,mode="all",dirty=JSON.parse(LS.g("dirty","{}"));
+const K=r=>r.id+"|"+r.seria,D=()=>(dirty[cur.id]=dirty[cur.id]||{}),sv=()=>LS.s("dirty",JSON.stringify(dirty));
+const st=(t,e)=>{$("st").textContent=t;$("st").className=e?"e":""};
+
+async function api(p,o={}){
+ const h={"ngrok-skip-browser-warning":"1",...(o.headers||{})},u=LS.g("usr","");
+ if(u)h.Authorization="Basic "+btoa(unescape(encodeURIComponent(u+":"+LS.g("pwd",""))));
+ let r;try{r=await fetch(LS.g("root",ROOT)+p,{...o,headers:h})}catch(e){throw new Error("Serverga ulanib bo'lmadi. Wi-Fi va manzilni tekshiring.")}
+ if(r.status===401)throw new Error("Login yoki parol noto'g'ri.");
+ const j=await r.json().catch(()=>null);
+ if(!r.ok)throw new Error((j&&j.error?j.error:"Server xatosi "+r.status).slice(0,200));
+ if(j===null)throw new Error("Server JSON o'rniga boshqa javob qaytardi. Manzilni va ngrok sozlamasini tekshiring.");
+ return j;
+}
+function view(v){
+ $("back").hidden=$("q").hidden=$("tabs").hidden=$("rows").hidden=v===1;$("list").hidden=v===2;$("rf").hidden=v===2;
+ $("ttl").textContent=v===1?"Qoralama hujjatlar":"№ "+cur.nomer;cnt();
+}
+function cnt(){const n=cur?Object.keys(D()).length:0;$("save").hidden=!n;$("save").textContent="Saqlash ("+n+")"}
+
+async function loadDocs(){
+ cur=null;view(1);st("Yuklanmoqda...");
+ try{const l=await api("hujjatlar");
+  st(l.length?l.length+" ta qoralama hujjat":"Qoralama hujjat yo'q.");
+  $("list").innerHTML=l.map(d=>{const p=d.jami?Math.round(d.tayyor*100/d.jami):0,n=Object.keys(dirty[d.id]||{}).length;
+   return `<div class="it" data-id="${d.id}" data-n="${esc(d.nomer)}"><div class="nm">№ ${esc(d.nomer)} · ${esc(d.sklad)}</div>
+   <div class="sub">${esc(d.sana)} · Sanalgan ${d.tayyor}/${d.jami}${n?" · saqlanmagan: "+n:""}</div><div class="bar"><i style="width:${p}%"></i></div></div>`}).join("");
+ }catch(e){st(e.message,1)}
+}
+$("list").onclick=e=>{const c=e.target.closest("[data-id]");if(!c)return;
+ cur={id:c.dataset.id,nomer:c.dataset.n};$("q").value="";mode="all";view(2);loadRows()};
+
+async function loadRows(){
+ const q=$("q").value.trim(),my=++seq;st("Yuklanmoqda...");
+ try{const r=await api("hujjat/"+cur.id+"?q="+encodeURIComponent(q)+"&f="+mode);if(my!==seq)return;
+  if(r.proveden)return st("Bu hujjat 1C'da o'tkazilgan. O'zgartirib bo'lmaydi.",1);
+  rows=r.rows;tabs(r.counts);st(rows.length?rows.length+" ta tovar"+(rows.length>=50?" (birinchi 50 ta, qidiruv bilan toraytiring)":""):"Topilmadi.");
+  $("rows").innerHTML=rows.map(x=>{const k=K(x),v=D()[k],val=v!==undefined?v:(x.fakt?x.fakt:"");
+   return `<div class="it${v!==undefined||x.fakt?" d":""}"><div class="nm">${esc(x.name)}</div>
+   ${x.seria_name?`<div class="sub">${esc(x.seria_name)}</div>`:""}
+   <div class="cells"><div class="cell"><small>Baza</small><div class="v">${nf.format(x.uchet)}</div></div>
+   <div class="cell"><small>Fakt</small><input data-k="${k}" type="number" inputmode="decimal" min="0" placeholder="0" value="${val}"></div>
+   <div class="cell"><small>Farq</small><div class="v df ${dc(x.uchet,v!==undefined?v:x.fakt,v!==undefined||x.fakt)}">${dt(x.uchet,v!==undefined?v:x.fakt,v!==undefined||x.fakt)}</div></div></div></div>`}).join("");
+ }catch(e){if(my===seq)st(e.message,1)}
+}
+$("rows").oninput=e=>{const k=e.target.dataset.k;if(!k)return;
+ const v=parseFloat(e.target.value);
+ if(isNaN(v)||v<0)delete D()[k];else D()[k]=v;
+ const it=e.target.closest(".it"),x=rows.find(r=>K(r)===k);
+ it.classList.toggle("d",!isNaN(v));const fe=it.querySelector(".df");fe.textContent=dt(x.uchet,v,!isNaN(v));fe.className="v df "+dc(x.uchet,v,!isNaN(v));sv();cnt()};
+const dt=(u,f,on)=>on?(f-u>0?"+":"")+nf.format(Math.round((f-u)*1000)/1000):"—";
+const dc=(u,f,on)=>{if(!on)return"";const d=Math.round((f-u)*1000);return d<0?"neg":d>0?"pos":""};
+function tabs(c){if(!c)return;
+ const t={all:"Jami ("+c.jami+")",new:"Sanalmaganlar ("+c.sanalmagan+")",diff:"Farqlilar ("+c.farqli+")"};
+ document.querySelectorAll("#tabs button").forEach(b=>{b.textContent=t[b.dataset.m];b.classList.toggle("on",b.dataset.m===mode)})}
+$("tabs").onclick=e=>{const b=e.target.closest("button[data-m]");if(!b)return;mode=b.dataset.m;loadRows()};
+$("q").oninput=()=>{clearTimeout(tm);tm=setTimeout(loadRows,400)};
+$("q").onkeydown=e=>{if(e.key==="Enter"){clearTimeout(tm);loadRows()}};
+
+$("save").onclick=async()=>{
+ const d=D(),ks=Object.keys(d);if(!ks.length)return;
+ const items=ks.map(k=>{const [id,seria]=k.split("|");return{id,seria,fakt:d[k]}});
+ st("Saqlanmoqda...");
+ try{const r=await api("hujjat/"+cur.id,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items})});
+  delete dirty[cur.id];sv();cnt();await loadRows();
+  st("Saqlandi: "+r.updated+" ta"+(r.missing?", hujjatda topilmadi: "+r.missing:"")+".")}
+ catch(e){st(e.message+" O'zgarishlar telefonda saqlangan.",1)}
+};
+$("back").onclick=loadDocs;$("rf").onclick=loadDocs;
+$("cfg").onclick=()=>{$("root").value=LS.g("root",ROOT);$("usr").value=LS.g("usr","");$("pwd").value=LS.g("pwd","");$("dlg").showModal()};
+$("no").onclick=()=>$("dlg").close();
+$("ok").onclick=()=>{LS.s("root",$("root").value.trim());LS.s("usr",$("usr").value);LS.s("pwd",$("pwd").value);$("dlg").close();loadDocs()};
+loadDocs();
+</script></body></html>
